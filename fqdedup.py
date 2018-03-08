@@ -14,14 +14,16 @@
 # 	- Remove duplicate sequence by keeping the higher quality one.
 # 	
 # Notes:
-# 	Current implementation can be used only if the whole fastq file can be
-# 	stored in the machine's RAM.
+# 	Current implementation requires less RAM than previous ones, but takes
+# 	longer times to compute. Instead of storing each FASTQ record as parsed,
+# 	it stores them separately as strings and then parses them again when needed.
 #	
 # ==============================================================================
 
 # DEPENDENCIES =================================================================
 
 import gzip
+from io import StringIO
 import os
 from subprocess import check_output
 import sys
@@ -69,20 +71,24 @@ with gzip.open(zip_path, "rt") as ih:
 		if "N" in seq[:linker_length]:
 			continue
 		else:
-			records.append(record)
+			records.append(record.format("fastq"))
 	print("%d records without N in the linker region." % (len(records),))
 
 	# Sort the reads by quality (higher on top)
 	print("Sorting by quality...")
-	records.sort(key = lambda x: -sum(x.letter_annotations['phred_quality']))
+	def get_qual_from_s(srecord):
+		record = SeqIO.read(StringIO(srecord), "fastq")
+		return(sum(record.letter_annotations['phred_quality']))
+	records.sort(key = lambda x: -get_qual_from_s(x))
 
 	# Remove duplicates and write output
 	print("Deduplicating...")
 	encountered = set()
 	for i in tqdm(range(len(records))):
-		if str(records[i].seq) not in encountered:
-			encountered.add(str(records[i].seq))
-			oh.write(records[i].format("fastq"))
+		record = SeqIO.read(StringIO(records[i]), "fastq")
+		if str(record.seq) not in encountered:
+			encountered.add(str(record.seq))
+			oh.write(record.format("fastq"))
 	print("%d records after deduplication." % len(encountered))
 
 # Close output handle
