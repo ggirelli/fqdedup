@@ -7,11 +7,19 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 
 ## Unreleased
+### ...
+- ...
+
+
+
+## [1.1.0] - 2018-03-08 - First release.
 ### Added
 - Logging specified linker length.
+- Resident memory upper limit and memory profiling.
 
 ### Changed
 - Order of settings log.
+- Instead of storing the whole FASTQ, filter while reading.
 
 
 
@@ -20,4 +28,5 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 
 [Unreleased] https://github.com/ggirelli/fqdedup
+[1.1.0] https://github.com/ggirelli/fqdedup/releases/tag/v1.0.0
 [1.0.0] https://github.com/ggirelli/fqdedup/releases/tag/v1.0.0
