@@ -177,8 +177,6 @@ def run(ih, oh, linker_length, nrecs):
 # Log input
 print("\n# fqdedup3.py - Single-end FASTQ deduplication")
 print("Input: %s" % (ipath,))
-if doMean: print("!Using average quality for sequence selection.")
-else: print("! Using quality sum for sequence selection.")
 
 if ( is_gz_file(ipath) ):
 	print("! Gzipped FASTQ deduplication style.")
@@ -195,6 +193,11 @@ else:
 	oh = open(opath, "wt")
 	ih = open(ipath, "rt")
 
+if doMean: print("!Using average quality for sequence selection.")
+else: print("! Using quality sum for sequence selection.")
+if 0 != linker_length:
+	print("! Discarding sequences with N in the first %d bases." % (
+		linker_length,))
 print()
 
 # Count records in input
