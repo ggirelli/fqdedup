@@ -5,7 +5,7 @@
 # 
 # author: Gabriele Girelli
 # email: gigi.ga90@gmail.com
-# version: 1.1.0
+# version: 1.1.1dev
 # date: 180308
 # project: pre-processing sequencing data
 # 
@@ -56,7 +56,7 @@ from tqdm import tqdm
 parser = argparse.ArgumentParser(description = '''
 author: Gabriele Girelli
 email: gigi.ga90@gmail.com
-version: 1.1.0
+version: 1.1.1dev
 date: 180308
 project: pre-processing sequencing data
 
@@ -106,7 +106,7 @@ parser.add_argument('--use-mean-qual',
 	help = 'Select sequences based on mean quality instead of quality sum.')
 
 # Version flag
-version = "1.1.0"
+version = "1.1.1dev"
 parser.add_argument('--version', action = 'version',
 	version = '%s v%s' % (sys.argv[0], version,))
 
@@ -167,7 +167,7 @@ def write_output(oh, records):
 	records = list(records.values())
 	for i in tqdm(range(len(records))):
 		# Pop to empty mem sooner
-		oh.write(records.pop(0)['record'])
+		oh.write(records.pop(0)[0])
 
 def cmp_record(rec, records, ncounter, linker_length):
 	'''
@@ -190,17 +190,15 @@ def cmp_record(rec, records, ncounter, linker_length):
 	# Skip if N in linker sequence
 	if "N" not in seq[:linker_length]:
 		# Prepare record for storage
-		dout = {
-			"quality" : qCalc(rec.letter_annotations["phred_quality"]),
-			"record" : rec.format("fastq")
-		}
+		ltmp = [qCalc(rec.letter_annotations["phred_quality"]),
+			rec.format("fastq")]
 
 		if seq not in records.keys():
 			# Store record
-			records[seq] = dout
-		elif dout["quality"] > records[seq]["quality"]:
+			records[seq] = ltmp
+		elif ltmp[1] > records[seq]["quality"]:
 			# Replace stored record
-			records[seq] = dout
+			records[seq] = ltmp
 	else:
 		ncounter += 1
 

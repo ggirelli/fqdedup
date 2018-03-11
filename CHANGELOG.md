@@ -7,8 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 
 ## Unreleased
-### ...
-- ...
+### Changed
+- Storing records in list formate [string, quality] instead of dictionary.
 
 
 
