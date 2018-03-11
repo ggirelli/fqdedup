@@ -190,8 +190,8 @@ def cmp_record(rec, records, ncounter, linker_length):
 	# Skip if N in linker sequence
 	if "N" not in seq[:linker_length]:
 		# Prepare record for storage
-		ltmp = [qCalc(rec.letter_annotations["phred_quality"]),
-			rec.format("fastq")]
+		ltmp = [rec.format("fastq"),
+			qCalc(rec.letter_annotations["phred_quality"])]
 
 		if seq not in records.keys():
 			# Store record
