@@ -196,7 +196,7 @@ def cmp_record(rec, records, ncounter, linker_length):
 		if seq not in records.keys():
 			# Store record
 			records[seq] = ltmp
-		elif ltmp[1] > records[seq]["quality"]:
+		elif ltmp[1] > records[seq][1]:
 			# Replace stored record
 			records[seq] = ltmp
 	else:
