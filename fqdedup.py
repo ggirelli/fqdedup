@@ -107,8 +107,7 @@ parser.add_argument('--use-mean-qual',
 
 # Version flag
 version = "1.1.1dev"
-parser.add_argument('--version', action = 'version',
-	version = '%s v%s' % (sys.argv[0], version,))
+parser.add_argument('--version', action = 'version', version = '%s v%s' % (sys.argv[0], version,))
 
 # Parse arguments
 args = parser.parse_args()
@@ -163,11 +162,9 @@ def write_output(oh, records):
 		records (dict): records dictionary after filtering.
 	'''
 
-	# Convert to list to empty mem
-	records = list(records.values())
-	for i in tqdm(range(len(records))):
+	for k in tqdm(list(records)):
 		# Pop to empty mem sooner
-		oh.write(records.pop(0)[0])
+		oh.write(records.pop(k)[0])
 
 def cmp_record(rec, records, ncounter, linker_length):
 	'''
