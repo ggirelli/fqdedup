@@ -167,7 +167,7 @@ def write_output(oh, records):
 	records = list(records.values())
 	for i in tqdm(range(len(records))):
 		# Pop to empty mem sooner
-		oh.write(records.pop(0))
+		oh.write(records.pop(0)[0])
 
 def cmp_record(rec, records, ncounter, linker_length):
 	'''
@@ -190,14 +190,15 @@ def cmp_record(rec, records, ncounter, linker_length):
 	# Skip if N in linker sequence
 	if "N" not in seq[:linker_length]:
 		# Prepare record for storage
-		tmp = rec.format("fastq")
+		ltmp = (rec.format("fastq"),
+			qCalc(rec.letter_annotations["phred_quality"]))
 
 		if seq not in records.keys():
 			# Store record
-			records[seq] = tmp
-		elif qCalc(tmp) > qCalc(records[seq]):
+			records[seq] = ltmp
+		elif ltmp[1] > records[seq][1]:
 			# Replace stored record
-			records[seq] = tmp
+			records[seq] = ltmp
 	else:
 		ncounter += 1
 
