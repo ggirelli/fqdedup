@@ -41,14 +41,12 @@ import argparse
 import binascii
 from Bio import SeqIO
 import gzip
-from io import StringIO
 import numpy as np
 import os
-import psutil
+import resource
 from subprocess import check_output
 import sys
 from tqdm import tqdm
-
 
 # PARAMETERS ===================================================================
 
@@ -107,7 +105,8 @@ parser.add_argument('--use-mean-qual',
 
 # Version flag
 version = "1.1.1dev"
-parser.add_argument('--version', action = 'version', version = '%s v%s' % (sys.argv[0], version,))
+parser.add_argument('--version', action = 'version',
+	version = '%s v%s' % (sys.argv[0], version,))
 
 # Parse arguments
 args = parser.parse_args()
@@ -123,21 +122,20 @@ if max_mem < 0:
 
 doMean = args.doMean
 if doMean:
-	qCalc = lambda x: np.mean(x)
+	qCalc = lambda x: float(np.mean(x))
 else:
-	qCalc = lambda x: np.sum(x)
+	qCalc = lambda x: int(np.sum(x))
 
 # FUNCTIONS ====================================================================
+
+from memory_profiler import profile
 
 def get_mem():
 	# Memory profiling
 	# From https://goo.gl/HkfNpu
-	import resource
-	rusage_denom = 1024.
 	if sys.platform == 'darwin':
-		rusage_denom = rusage_denom * rusage_denom
-	mem = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / rusage_denom
-	return mem
+	 return resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / (1024.**2)
+	return resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / 1024.
 
 def check_mem():
 	# Print memory profiling
@@ -187,15 +185,14 @@ def cmp_record(rec, records, ncounter, linker_length):
 	# Skip if N in linker sequence
 	if "N" not in seq[:linker_length]:
 		# Prepare record for storage
-		ltmp = (rec.format("fastq"),
-			qCalc(rec.letter_annotations["phred_quality"]))
+		q = qCalc(rec.letter_annotations["phred_quality"])
 
 		if seq not in records.keys():
 			# Store record
-			records[seq] = ltmp
-		elif ltmp[1] > records[seq][1]:
+			records[seq] = (rec.format("fastq"), q)
+		elif q > records[seq][1]:
 			# Replace stored record
-			records[seq] = ltmp
+			records[seq] = (rec.format("fastq"), q)
 	else:
 		ncounter += 1
 
@@ -223,8 +220,16 @@ def run(ih, oh, linker_length, nrecs):
 	records = {}
 	ncounter = 0
 
-	for rec in tqdm(SeqIO.parse(ih, "fastq"), total = nrecs):
-		records, ncounter = cmp_record(rec, records, ncounter, linker_length)
+	# Parse FASTQ records
+	gen = SeqIO.parse(ih, "fastq")
+	with tqdm(total = nrecs) as pbar:
+		for i in range(nrecs):
+			# Compare current record with stored ones
+			records, ncounter = cmp_record(
+				gen.__next__(), records, ncounter, linker_length)
+
+			# Update progress bar
+			pbar.update(1)
 	log_result(ncounter, len(records))
 
 	# Remove duplicates and write output
@@ -254,14 +259,21 @@ def run_mm(ih, oh, linker_length, nrecs, max_mem = None):
 	records = {}
 	ncounter = 0
 
-	for rec in tqdm(SeqIO.parse(ih, "fastq"), total = nrecs):
-		# Stop when the mem limit is hit
-		if get_mem() >= max_mem:
-			sys.exit("!ABORTED! Hit resident memory limit of %d MB." % (
-				max_mem,))
+	# Parse FASTQ records
+	gen = SeqIO.parse(ih, "fastq")
+	with tqdm(total = nrecs) as pbar:
+		for i in range(nrecs):
+			# Stop when the mem limit is hit
+			if get_mem() >= max_mem:
+				sys.exit("!ABORTED! Hit resident memory limit of %d MB." % (
+					max_mem,))
 
-		# Compare current record with stored ones
-		records, ncounter = cmp_record(rec, records, ncounter, linker_length)
+			# Compare current record with stored ones
+			records, ncounter = cmp_record(
+				gen.__next__(), records, ncounter, linker_length)
+
+			# Update progress bar
+			pbar.update(1)
 	log_result(ncounter, len(records))
 
 	# Remove duplicates and write output
@@ -305,15 +317,17 @@ print()
 # Count records in input -------------------------------------------------------
 
 print("Counting records...")
-nrecs = float(check_output(
-	["bash", "-c", "%s '%s' | wc -l" % (catter, ipath)])) / 4
+nrecs = int(int(check_output(
+	["bash", "-c", "%s '%s' | wc -l" % (catter, ipath)])) / 4.)
 print("> Found %d records." % (nrecs,))
 
 # Run --------------------------------------------------------------------------
 
 if np.inf == max_mem:
+	# No memory management
 	run(ih, oh, linker_length, nrecs)
 else:
+	# With memory management
 	run_mm(ih, oh, linker_length, nrecs, max_mem)
 
 # END ==========================================================================
