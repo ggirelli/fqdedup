@@ -128,8 +128,6 @@ else:
 
 # FUNCTIONS ====================================================================
 
-from memory_profiler import profile
-
 def get_mem():
 	# Memory profiling
 	# From https://goo.gl/HkfNpu
