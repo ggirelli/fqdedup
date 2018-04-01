@@ -226,7 +226,7 @@ def run(ih, oh, linker_length, nrecs):
 		for i in range(nrecs):
 			# Compare current record with stored ones
 			records, ncounter = cmp_record(
-				gen.__next__(), records, ncounter, linker_length)
+				next(gen), records, ncounter, linker_length)
 
 			# Update progress bar
 			pbar.update(1)
@@ -270,7 +270,7 @@ def run_mm(ih, oh, linker_length, nrecs, max_mem = None):
 
 			# Compare current record with stored ones
 			records, ncounter = cmp_record(
-				gen.__next__(), records, ncounter, linker_length)
+				next(gen), records, ncounter, linker_length)
 
 			# Update progress bar
 			pbar.update(1)

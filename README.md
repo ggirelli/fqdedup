@@ -1,6 +1,11 @@
 # fqdedup
 Single-ended FASTQ file deduplication
 
+### Dependencies
+
+`fqdedup` depends on a number of python packages.
+
+### Usage
 
 ```plain
 usage: fqdedup.py [-h] [-n nt] [--max-mem MB] [--use-mean-qual] [--version]
