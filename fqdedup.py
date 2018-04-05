@@ -234,7 +234,7 @@ def run(ih, oh, linker_length, nrecs):
 	print("Writing...")
 	write_output(oh, records)
 
-def run_mm(ih, oh, linker_length, nrecs, max_mem = None):
+def run_mm(ih, oh, linker_length, nrecs, max_mem = np.inf):
 	'''
 	Run the script on the input file: remove records with Ns in the initial
 	portion of the sequence, if linker_length is larger than 0.
@@ -249,8 +249,7 @@ def run_mm(ih, oh, linker_length, nrecs, max_mem = None):
 	'''
 
 	# Default memory limit to infinity
-	if max_mem < 0: max_mem = None
-	max_mem = set_default(max_mem, np.inf)
+	if max_mem <= 0: max_mem = np.inf
 
 	# Read all records
 	print("Reading and filtering...")
