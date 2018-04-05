@@ -40,7 +40,9 @@
 import argparse
 import binascii
 from Bio import SeqIO
+from Bio.SeqIO.QualityIO import FastqGeneralIterator
 import gzip
+from io import StringIO
 import numpy as np
 import os
 import resource
@@ -168,7 +170,7 @@ def cmp_record(rec, records, ncounter, linker_length):
 	discard if "N" is present in the initial portion of the sequence.
 
 	Args:
-		rec (SeqRecord): single FASTQ record.
+		rec (tuple): single FASTQ record.
 		records (dict): records dictionary during filtering.
 		ncounter (int): number of records discarded due to "N".
 		linker_length (int): Length [nt] of sequence portion to search for N.
@@ -178,19 +180,21 @@ def cmp_record(rec, records, ncounter, linker_length):
 	'''
 
 	# Extract record's sequence, let's make it comfy
-	seq = str(rec.seq)
+	seq = rec[1]
 
 	# Skip if N in linker sequence
 	if "N" not in seq[:linker_length]:
 		# Prepare record for storage
-		q = qCalc(rec.letter_annotations["phred_quality"])
+		with StringIO("@%s\n%s\n+\n%s\n" % rec) as fastq_io:
+			q = SeqIO.read(fastq_io, "fastq")
+			q = qCalc(q.letter_annotations["phred_quality"])
 
 		if seq not in records.keys():
 			# Store record
-			records[seq] = (rec.format("fastq"), q)
+			records[seq] = ("@%s\n%s\n+\n%s\n" % rec, q)
 		elif q > records[seq][1]:
 			# Replace stored record
-			records[seq] = (rec.format("fastq"), q)
+			records[seq] = ("@%s\n%s\n+\n%s\n" % rec, q)
 	else:
 		ncounter += 1
 
@@ -219,7 +223,8 @@ def run(ih, oh, linker_length, nrecs):
 	ncounter = 0
 
 	# Parse FASTQ records
-	gen = SeqIO.parse(ih, "fastq")
+	gen = FastqGeneralIterator(ih)
+
 	with tqdm(total = nrecs) as pbar:
 		for i in range(nrecs):
 			# Compare current record with stored ones
@@ -257,7 +262,7 @@ def run_mm(ih, oh, linker_length, nrecs, max_mem = np.inf):
 	ncounter = 0
 
 	# Parse FASTQ records
-	gen = SeqIO.parse(ih, "fastq")
+	gen = FastqGeneralIterator(ih)
 	with tqdm(total = nrecs) as pbar:
 		for i in range(nrecs):
 			# Stop when the mem limit is hit
