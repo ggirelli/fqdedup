@@ -225,14 +225,11 @@ def run(ih, oh, linker_length, nrecs):
 	# Parse FASTQ records
 	gen = FastqGeneralIterator(ih)
 
-	with tqdm(total = nrecs) as pbar:
-		for i in range(nrecs):
-			# Compare current record with stored ones
-			records, ncounter = cmp_record(
-				next(gen), records, ncounter, linker_length)
+	for i in tqdm(range(nrecs)):
+		# Compare current record with stored ones
+		records, ncounter = cmp_record(
+			next(gen), records, ncounter, linker_length)
 
-			# Update progress bar
-			pbar.update(1)
 	log_result(ncounter, len(records))
 
 	# Remove duplicates and write output
@@ -263,19 +260,16 @@ def run_mm(ih, oh, linker_length, nrecs, max_mem = np.inf):
 
 	# Parse FASTQ records
 	gen = FastqGeneralIterator(ih)
-	with tqdm(total = nrecs) as pbar:
-		for i in range(nrecs):
-			# Stop when the mem limit is hit
-			if get_mem() >= max_mem:
-				sys.exit("!ABORTED! Hit resident memory limit of %d MB." % (
-					max_mem,))
+	for i in tqdm(range(nrecs)):
+		# Stop when the mem limit is hit
+		if get_mem() >= max_mem:
+			sys.exit("!ABORTED! Hit resident memory limit of %d MB." % (
+				max_mem,))
 
-			# Compare current record with stored ones
-			records, ncounter = cmp_record(
-				next(gen), records, ncounter, linker_length)
+		# Compare current record with stored ones
+		records, ncounter = cmp_record(
+			next(gen), records, ncounter, linker_length)
 
-			# Update progress bar
-			pbar.update(1)
 	log_result(ncounter, len(records))
 
 	# Remove duplicates and write output
