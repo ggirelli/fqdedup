@@ -164,6 +164,18 @@ def write_output(oh, records):
 		# Pop to empty mem sooner
 		oh.write(records.pop(k)[0])
 
+def fqrec_to_num(rec):
+	'''Extract quality values from FASTQ record.
+
+	Args:
+		rec (tuple): single FASTQ record.
+
+	Returns:
+		list: single base quality values.
+	'''
+	return(qCalc(StringIO("@%s\n%s\n+\n%s\n" % rec).read(fastq_io, "fastq"
+		).letter_annotations["phred_quality"]))
+
 def cmp_record(rec, records, ncounter, linker_length):
 	'''
 	Compares a record to stored one, replace previous ones based on quality and
@@ -184,11 +196,7 @@ def cmp_record(rec, records, ncounter, linker_length):
 
 	# Skip if N in linker sequence
 	if "N" not in seq[:linker_length]:
-		# Prepare record for storage
-		with StringIO("@%s\n%s\n+\n%s\n" % rec) as fastq_io:
-			q = SeqIO.read(fastq_io, "fastq")
-			q = qCalc(q.letter_annotations["phred_quality"])
-
+		q = fqrec_to_num(rec)
 		if seq not in records.keys():
 			# Store record
 			records[seq] = ("@%s\n%s\n+\n%s\n" % rec, q)
